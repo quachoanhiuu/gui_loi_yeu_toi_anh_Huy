@@ -169,7 +169,7 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) scale(0.3); /* lúc đầu nhỏ xíu */
+      transform: translate(-50%, -50%) scale(0.3);
       width: 60vw;
       max-width: 450px;
       border-radius: 20px;
@@ -178,19 +178,80 @@
         0 0 30px rgba(255, 90, 180, 0.8);
       opacity: 0;
       transition: opacity 1.6s ease, transform 1.6s ease;
-      z-index: 5; /* cao hơn trái tim */
+      z-index: 5;
     }
 
     .final-img.show {
       opacity: 1;
-      transform: translate(-50%, -50%) scale(1.25); /* phóng to che tim */
+      transform: translate(-50%, -50%) scale(1.25);
+    }
+
+    /* OVERLAY NHẤN ĐỂ BẮT ĐẦU */
+    .start-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, #ff99cc44, #000000ee);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      color: #ffe6ff;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .start-title {
+      font-size: 26px;
+      margin-bottom: 12px;
+    }
+
+    .start-sub {
+      font-size: 16px;
+      opacity: 0.85;
+      margin-bottom: 24px;
+    }
+
+    .start-btn {
+      padding: 12px 28px;
+      border-radius: 999px;
+      border: 1px solid #ffb3e6;
+      background: linear-gradient(45deg, #ff5fb4, #ff9adf);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow:
+        0 0 10px rgba(255, 140, 210, 0.8),
+        0 0 20px rgba(255, 100, 200, 0.7);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 0 14px rgba(255, 140, 210, 0.9),
+        0 0 26px rgba(255, 100, 200, 0.85);
+    }
+
+    .start-overlay.hide {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
     }
   </style>
 </head>
 <body>
 
-<!-- NHẠC NỀN: cố gắng tự bật -->
-<audio id="bgm" src="music.mp3" preload="auto" loop autoplay></audio>
+<!-- NHẠC NỀN -->
+<audio id="bgm" src="music.mp3" preload="auto" loop></audio>
+
+<!-- OVERLAY NHẤN ĐỂ BẮT ĐẦU -->
+<div id="startOverlay" class="start-overlay">
+  <div class="start-title">Nhấn để bắt đầu món quà của bé ✨</div>
+  <div class="start-sub">Bật nhạc + xem điều bất ngờ dành cho anhiu nè 💗</div>
+  <button class="start-btn" id="startButton">Bắt đầu</button>
+</div>
 
 <canvas id="matrix"></canvas>
 
@@ -213,7 +274,6 @@
   </div>
 </div>
 
-<!-- ẢNH CUỐI CÙNG – sẽ hiện SAU trái tim -->
 <img id="finalImage" src="final.png" alt="us" class="final-img" />
 
 <script>
@@ -323,12 +383,10 @@
     const showTime = 2000;
     const gapTime  = 400;
 
-    // chạy từng dòng: 5,4,3,2,1, rồi chữ chúc
     for (const text of LINES) {
       centerText.innerHTML = text;
       centerText.classList.add("show");
 
-      // riêng câu "Chúc anhiu của bé" đứng lâu hơn 1s
       const extra = (text === "Chúc anhiu của bé") ? 1000 : 0;
       await sleep(showTime + extra);
 
@@ -336,31 +394,41 @@
       await sleep(gapTime);
     }
 
-    // hiện trái tim to trước
     heartContainer.classList.add("show");
     await sleep(2500);
 
-    // SAU ĐÓ: hiện ảnh phóng to ở giữa và làm tim mờ đi
     finalImage.classList.add("show");
-    heartContainer.style.opacity = 0.25; // muốn tim biến mất luôn thì = 0
+    heartContainer.style.opacity = 0.25;
     await sleep(1500);
 
-    // rồi mới cho chữ bay bay
     spawnFloatingMessages();
     setTimeout(spawnFloatingMessages, 6000);
   }
 
-  // Cố gắng bật nhạc + chạy sequence
+  // XỬ LÝ NÚT "BẮT ĐẦU"
   window.addEventListener("load", () => {
     const bgm = document.getElementById("bgm");
-    if (bgm) {
-      bgm.volume = 0.8;
-      bgm.play().catch(() => {
-        console.warn("Trình duyệt chặn autoplay nhạc.");
-      });
-    }
+    const overlay = document.getElementById("startOverlay");
+    const btn = document.getElementById("startButton");
 
-    setTimeout(startSequence, 800);
+    const startAll = () => {
+      // bật nhạc
+      if (bgm) {
+        bgm.volume = 0.8;
+        bgm.play().catch(() => {
+          console.warn("Không bật được nhạc (policy trình duyệt).");
+        });
+      }
+      // ẩn overlay
+      overlay.classList.add("hide");
+      // bắt đầu animation
+      setTimeout(startSequence, 400);
+    };
+
+    btn.addEventListener("click", startAll, { once: true });
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) startAll();
+    }, { once: true });
   });
 </script>
 
